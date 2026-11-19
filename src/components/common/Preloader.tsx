@@ -1,42 +1,34 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
+import { isReducedMotion } from '../../lib/animations'
 
 interface PreloaderProps {
   onComplete?: () => void
 }
 
 export function Preloader({ onComplete }: PreloaderProps) {
-  const [loading, setLoading] = useState(true)
-  const [count, setCount] = useState(0)
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === 'undefined') return false
+    // Skip if user prefers reduced motion or has visited during this session
+    if (isReducedMotion()) return false
+    return !sessionStorage.getItem('yash_portfolio_visited')
+  })
 
   useEffect(() => {
-    // Check if user prefers reduced motion
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (prefersReduced) {
-      setLoading(false)
+    if (!loading) {
       onComplete?.()
       return
     }
 
-    // Snappy, realistic counter progression
-    let current = 0
-    const timer = setInterval(() => {
-      current += Math.floor(Math.random() * 12) + 8
-      if (current >= 100) {
-        current = 100
-        setCount(100)
-        clearInterval(timer)
-        setTimeout(() => {
-          setLoading(false)
-          onComplete?.()
-        }, 320)
-      } else {
-        setCount(current)
-      }
-    }, 45)
+    // Short, elegant, branded intro transition (600ms total)
+    const timer = setTimeout(() => {
+      sessionStorage.setItem('yash_portfolio_visited', 'true')
+      setLoading(false)
+      onComplete?.()
+    }, 650)
 
-    return () => clearInterval(timer)
-  }, [onComplete])
+    return () => clearTimeout(timer)
+  }, [loading, onComplete])
 
   return (
     <AnimatePresence>
@@ -46,59 +38,52 @@ export function Preloader({ onComplete }: PreloaderProps) {
           initial={{ opacity: 1 }}
           exit={{
             y: '-100%',
-            transition: { duration: 0.75, ease: [0.76, 0, 0.24, 1] },
+            opacity: 0.95,
+            transition: { duration: 0.65, ease: [0.76, 0, 0.24, 1] },
           }}
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#07090e] text-slate-100 select-none overflow-hidden"
         >
           {/* Subtle Ambient Radial Highlight */}
-          <div className="absolute w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none" />
+          <div className="absolute w-[450px] h-[450px] rounded-full bg-cyan-500/10 blur-[130px] pointer-events-none" />
 
           {/* Monogram Box with Animated Glow Border */}
-          <div className="relative mb-8">
+          <div className="relative mb-6">
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="relative flex items-center justify-center w-24 h-24 rounded-3xl bg-slate-900/90 border border-cyan-500/40 shadow-[0_0_40px_rgba(56,189,248,0.2)] overflow-hidden"
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              className="relative flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-slate-900/90 border border-cyan-500/40 shadow-[0_0_35px_rgba(56,189,248,0.25)] overflow-hidden"
             >
-              <span className="font-display font-black text-4xl text-transparent bg-clip-text bg-gradient-to-br from-cyan-300 via-sky-400 to-blue-500 tracking-tight">
+              <span className="font-display font-black text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-br from-cyan-300 via-sky-400 to-blue-500 tracking-tight">
                 YG
               </span>
               <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/15 to-transparent pointer-events-none" />
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.9)]" />
+              <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)]" />
             </motion.div>
           </div>
 
           {/* Developer Title */}
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.4 }}
-            className="text-center mb-8"
+            transition={{ delay: 0.1, duration: 0.4 }}
+            className="text-center"
           >
-            <h2 className="text-base font-bold tracking-wider uppercase text-slate-200">
+            <h2 className="text-sm sm:text-base font-bold tracking-wider uppercase text-slate-100">
               Yash Gawad
             </h2>
-            <p className="text-xs font-mono text-cyan-400/90 tracking-widest uppercase mt-0.5">
-              Software Developer • Architecture &amp; Systems
+            <p className="text-[11px] font-mono text-cyan-400 tracking-widest uppercase mt-1">
+              Software Developer • Full-Stack Systems
             </p>
           </motion.div>
 
-          {/* Digital Loading Gauge */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-56 h-1 bg-slate-800/90 rounded-full overflow-hidden relative">
-              <motion.div
-                className="h-full bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 rounded-full shadow-[0_0_12px_rgba(56,189,248,0.8)]"
-                style={{ width: `${count}%` }}
-                transition={{ ease: 'easeOut', duration: 0.05 }}
-              />
-            </div>
-
-            <div className="flex items-center justify-between w-56 text-[11px] font-mono text-slate-400">
-              <span>SYSTEMS_INIT</span>
-              <span className="text-cyan-300 font-bold">{count.toString().padStart(3, '0')}%</span>
-            </div>
-          </div>
+          {/* Elegant Status Bar */}
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 140, opacity: 1 }}
+            transition={{ delay: 0.15, duration: 0.45, ease: 'easeOut' }}
+            className="h-0.5 mt-5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent rounded-full"
+          />
         </motion.div>
       )}
     </AnimatePresence>

@@ -5,6 +5,7 @@ import { Layout, Server, Database, Cpu, ArrowUpRight } from 'lucide-react'
 import { Container } from '../common/Container'
 import { SectionHeading } from '../common/SectionHeading'
 import { PORTFOLIO_DATA } from '../../data/portfolio'
+import { isReducedMotion, MOTION_TIMING, MOTION_EASING } from '../../lib/animations'
 
 export function Capabilities() {
   const { capabilities } = PORTFOLIO_DATA
@@ -19,24 +20,24 @@ export function Capabilities() {
 
   useGSAP(
     () => {
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      if (prefersReduced) return
+      if (isReducedMotion()) return
 
       const cards = gsap.utils.toArray<HTMLElement>('.capability-card')
       gsap.fromTo(
         cards,
-        { opacity: 0, y: 40, scale: 0.95 },
+        { opacity: 0, y: 35, scale: 0.96 },
         {
           opacity: 1,
           y: 0,
           scale: 1,
-          stagger: 0.12,
-          duration: 0.75,
-          ease: 'power3.out',
+          stagger: 0.1,
+          duration: MOTION_TIMING.entrance,
+          ease: MOTION_EASING.entrance,
           scrollTrigger: {
             trigger: sectionRef.current,
             start: 'top 80%',
             toggleActions: 'play none none none',
+            once: true,
           },
         }
       )
@@ -65,10 +66,10 @@ export function Capabilities() {
           {capabilities.map((cap) => (
             <div
               key={cap.id}
-              className="capability-card group relative p-8 sm:p-10 rounded-3xl bg-slate-900/60 border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-950/30 backdrop-blur-xl flex flex-col justify-between overflow-hidden"
+              className="capability-card group relative p-8 sm:p-10 rounded-3xl bg-slate-900/60 border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-950/30 hover:-translate-y-1 backdrop-blur-xl flex flex-col justify-between overflow-hidden"
             >
               {/* Subtle hover gradient sweep */}
-              <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-500/5" />
+              <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-cyan-500/6 via-transparent to-blue-500/6" />
 
               <div className="relative z-10">
                 {/* Top Row: Index number & Category Icon */}

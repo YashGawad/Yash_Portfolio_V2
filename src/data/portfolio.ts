@@ -92,7 +92,7 @@ export const PORTFOLIO_DATA = {
       title: 'Smart Electricals',
       subtitle: 'B2B Heater Manufacturing & Commerce Platform',
       category: 'Client Work',
-      status: 'Real Client Project — In Progress',
+      status: 'Real Client Project',
       isInProgress: true,
       description:
         'Developing a B2B heater manufacturing website with a customer-facing storefront and an administration panel.',

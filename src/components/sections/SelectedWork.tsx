@@ -7,11 +7,13 @@ import { ProjectCard } from '../projects/ProjectCard'
 import { ProjectFilter, type FilterCategory } from '../projects/ProjectFilter'
 import { ProjectDetailsModal } from '../projects/ProjectDetailsModal'
 import { PORTFOLIO_DATA, type Project } from '../../data/portfolio'
+import { isReducedMotion, MOTION_TIMING, MOTION_EASING } from '../../lib/animations'
 
 export function SelectedWork() {
   const [activeCategory, setActiveCategory] = useState<FilterCategory>('All')
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const sectionRef = useRef<HTMLElement>(null)
+  const hasInitialTriggered = useRef(false)
 
   const categories: FilterCategory[] = [
     'All',
@@ -27,31 +29,48 @@ export function SelectedWork() {
           (project) => project.category === activeCategory
         )
 
-  // GSAP ScrollTrigger staggered card reveals
+  // GSAP ScrollTrigger staggered card reveals on first scroll, and smooth stagger on filter change
   useGSAP(
     () => {
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      if (prefersReduced) return
+      if (isReducedMotion()) return
 
       const cards = gsap.utils.toArray<HTMLElement>('.project-card-item')
-      cards.forEach((card) => {
+
+      if (!hasInitialTriggered.current) {
+        cards.forEach((card) => {
+          gsap.fromTo(
+            card,
+            { opacity: 0, y: 50, scale: 0.98 },
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: MOTION_TIMING.entrance,
+              ease: MOTION_EASING.entrance,
+              scrollTrigger: {
+                trigger: card,
+                start: 'top 88%',
+                toggleActions: 'play none none none',
+                once: true,
+              },
+            }
+          )
+        })
+        hasInitialTriggered.current = true
+      } else {
+        // Filter change animation: smooth cross-fade without layout jumps
         gsap.fromTo(
-          card,
-          { opacity: 0, y: 60, scale: 0.97 },
+          cards,
+          { opacity: 0, y: 20 },
           {
             opacity: 1,
             y: 0,
-            scale: 1,
-            duration: 0.8,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: card,
-              start: 'top 88%',
-              toggleActions: 'play none none none',
-            },
+            stagger: 0.08,
+            duration: MOTION_TIMING.component,
+            ease: MOTION_EASING.default,
           }
         )
-      })
+      }
     },
     { scope: sectionRef, dependencies: [activeCategory] }
   )

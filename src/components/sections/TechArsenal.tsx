@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
+import { motion } from 'motion/react'
 import {
   Code,
   Server,
@@ -13,6 +14,7 @@ import {
 import { Container } from '../common/Container'
 import { SectionHeading } from '../common/SectionHeading'
 import { PORTFOLIO_DATA } from '../../data/portfolio'
+import { isReducedMotion, MOTION_TIMING, MOTION_EASING } from '../../lib/animations'
 
 export function TechArsenal() {
   const { techArsenal, marqueeSkills } = PORTFOLIO_DATA
@@ -36,25 +38,19 @@ export function TechArsenal() {
   // Staggered reveal for skill cards
   useGSAP(
     () => {
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      if (prefersReduced) return
+      if (isReducedMotion()) return
 
       const cards = gsap.utils.toArray<HTMLElement>('.tech-card')
       gsap.fromTo(
         cards,
-        { opacity: 0, y: 35, scale: 0.96 },
+        { opacity: 0, y: 25, scale: 0.97 },
         {
           opacity: 1,
           y: 0,
           scale: 1,
-          stagger: 0.08,
-          duration: 0.65,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 80%',
-            toggleActions: 'play none none none',
-          },
+          stagger: 0.06,
+          duration: MOTION_TIMING.component,
+          ease: MOTION_EASING.default,
         }
       )
     },
@@ -72,19 +68,18 @@ export function TechArsenal() {
 
       {/* Infinite Seamless Ticker Marquee with Pause on Hover */}
       <div className="relative w-full mb-16 py-3.5 border-y border-slate-800/80 bg-slate-950/70 backdrop-blur-md overflow-hidden select-none group/marquee">
+        {/* Two identical sets translating -50% ensures a mathematically seamless infinite scroll */}
         <div className="flex w-max animate-marquee group-hover/marquee:[animation-play-state:paused] transition-all">
-          {[...marqueeSkills, ...marqueeSkills, ...marqueeSkills, ...marqueeSkills].map(
-            (skill, index) => (
-              <div
-                key={index}
-                className="inline-flex items-center gap-3 px-6 py-1 text-sm font-mono text-slate-300 tracking-wider hover:text-cyan-300 transition-colors"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="font-semibold text-slate-200">{skill}</span>
-                <span className="text-slate-600">•</span>
-              </div>
-            )
-          )}
+          {[...marqueeSkills, ...marqueeSkills].map((skill, index) => (
+            <div
+              key={index}
+              className="inline-flex items-center gap-3 px-6 py-1 text-sm font-mono text-slate-300 tracking-wider hover:text-cyan-300 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="font-semibold text-slate-200">{skill}</span>
+              <span className="text-slate-600">•</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -98,31 +93,45 @@ export function TechArsenal() {
             className="mb-0"
           />
 
-          {/* Category Filter Pills */}
+          {/* Category Filter Pills with smooth sliding indicator */}
           <div className="flex flex-wrap gap-1.5 p-1.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md w-fit">
             <button
               type="button"
               onClick={() => setSelectedCategory('All')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+              className={`relative px-3.5 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
                 selectedCategory === 'All'
-                  ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  ? 'text-slate-950 font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              All Categories
+              {selectedCategory === 'All' && (
+                <motion.div
+                  layoutId="activeTechFilter"
+                  className="absolute inset-0 rounded-xl bg-cyan-500 shadow-md shadow-cyan-500/25"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10">All Categories</span>
             </button>
             {techArsenal.map((cat) => (
               <button
                 key={cat.category}
                 type="button"
                 onClick={() => setSelectedCategory(cat.category)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 ${
+                className={`relative px-3 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
                   selectedCategory === cat.category
-                    ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                    ? 'text-slate-950 font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <span>{cat.category}</span>
+                {selectedCategory === cat.category && (
+                  <motion.div
+                    layoutId="activeTechFilter"
+                    className="absolute inset-0 rounded-xl bg-cyan-500 shadow-md shadow-cyan-500/25"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{cat.category}</span>
               </button>
             ))}
           </div>
@@ -138,38 +147,36 @@ export function TechArsenal() {
               <div>
                 <div className="flex items-center gap-2.5 mb-2">
                   <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-cyan-400">
-                    {categoryIcons[group.category] || <Code className="w-4 h-4 text-cyan-400" />}
+                    {categoryIcons[group.category] || (
+                      <Terminal className="w-4 h-4 text-cyan-400" />
+                    )}
                   </div>
-                  <div>
-                    <h3 className="text-base font-bold text-slate-100">{group.category}</h3>
-                  </div>
+                  <h3 className="text-base font-bold text-white tracking-tight">
+                    {group.category}
+                  </h3>
                 </div>
 
-                <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                <p className="text-xs text-slate-400 mb-6 leading-relaxed">
                   {group.description}
                 </p>
 
-                {/* Skill Pills */}
-                <div className="flex flex-wrap gap-2">
-                  {group.skills.map((skill) => (
-                    <div
-                      key={skill.name}
-                      className="group/item flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800/90 hover:border-cyan-500/40 hover:bg-slate-900 transition-all duration-200"
+                {/* Skills tags list */}
+                <div className="flex flex-wrap gap-1.5">
+                  {group.skills.map((skill, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2.5 py-1 text-xs font-mono rounded-lg bg-slate-950/80 border border-slate-800/90 text-slate-300 hover:text-cyan-300 hover:border-cyan-500/30 transition-colors flex items-center gap-1.5"
                     >
-                      <span className="text-xs font-medium text-slate-200 group-hover/item:text-cyan-300">
-                        {skill.name}
-                      </span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800/60 text-slate-400 group-hover/item:text-cyan-400/80">
-                        {skill.tag}
-                      </span>
-                    </div>
+                      <span>{skill.name}</span>
+                      <span className="text-[10px] text-slate-500 font-sans">• {skill.tag}</span>
+                    </span>
                   ))}
                 </div>
               </div>
 
-              <div className="mt-6 pt-3 border-t border-slate-800/40 flex items-center justify-between text-[11px] font-mono text-slate-500">
-                <span>{group.skills.length} core competencies</span>
-                <span className="text-cyan-400">active</span>
+              <div className="pt-4 mt-6 border-t border-slate-800/60 flex items-center justify-between text-[11px] font-mono text-slate-500">
+                <span>{group.skills.length} Technologies</span>
+                <span className="text-cyan-400">Verified</span>
               </div>
             </div>
           ))}

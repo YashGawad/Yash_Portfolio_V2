@@ -1,5 +1,6 @@
 import { useRef, type ReactNode, type MouseEvent } from 'react'
 import gsap from 'gsap'
+import { isReducedMotion, isFinePointer, MOTION_TIMING, MOTION_EASING } from '../../lib/animations'
 
 interface MagneticProps {
   children: ReactNode
@@ -7,13 +8,12 @@ interface MagneticProps {
   className?: string
 }
 
-export function Magnetic({ children, strength = 0.3, className = '' }: MagneticProps) {
+export function Magnetic({ children, strength = 0.2, className = '' }: MagneticProps) {
   const elementRef = useRef<HTMLDivElement | null>(null)
 
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    // Check fine pointer (desktop mouse)
-    if (window.matchMedia('(pointer: coarse)').matches) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    // Only execute on desktop with fine mouse pointer and when reduced motion is not requested
+    if (!isFinePointer() || isReducedMotion()) return
 
     const el = elementRef.current
     if (!el) return
@@ -22,14 +22,15 @@ export function Magnetic({ children, strength = 0.3, className = '' }: MagneticP
     const centerX = rect.left + rect.width / 2
     const centerY = rect.top + rect.height / 2
 
+    // Bounded subtle displacement
     const deltaX = (e.clientX - centerX) * strength
     const deltaY = (e.clientY - centerY) * strength
 
     gsap.to(el, {
       x: deltaX,
       y: deltaY,
-      duration: 0.25,
-      ease: 'power2.out',
+      duration: MOTION_TIMING.micro,
+      ease: MOTION_EASING.springLike,
       overwrite: 'auto',
     })
   }
@@ -38,11 +39,12 @@ export function Magnetic({ children, strength = 0.3, className = '' }: MagneticP
     const el = elementRef.current
     if (!el) return
 
+    // Smooth return to resting state without artificial jitter
     gsap.to(el, {
       x: 0,
       y: 0,
-      duration: 0.65,
-      ease: 'elastic.out(1.1, 0.4)',
+      duration: MOTION_TIMING.component,
+      ease: MOTION_EASING.default,
       overwrite: 'auto',
     })
   }

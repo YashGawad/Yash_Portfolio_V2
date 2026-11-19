@@ -5,18 +5,15 @@ export function CustomCursor() {
   const ringRef = useRef<HTMLDivElement>(null)
   const [isVisible, setIsVisible] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-  const [isFinePointer, setIsFinePointer] = useState(false)
+  const [isFinePointer] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const fine = window.matchMedia('(pointer: fine)').matches
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    return fine && !reduced
+  })
 
   useEffect(() => {
-    // Check for fine pointer (desktop mouse) and reduced motion preference
-    const finePointerQuery = window.matchMedia('(pointer: fine)')
-    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-
-    if (!finePointerQuery.matches || reducedMotionQuery.matches) {
-      return
-    }
-
-    setIsFinePointer(true)
+    if (!isFinePointer) return
 
     let mouseX = -100
     let mouseY = -100
@@ -28,7 +25,7 @@ export function CustomCursor() {
       mouseX = e.clientX
       mouseY = e.clientY
 
-      if (!isVisible) setIsVisible(true)
+      setIsVisible(true)
 
       // Move inner dot immediately
       if (dotRef.current) {
@@ -38,7 +35,6 @@ export function CustomCursor() {
 
     // Smooth lerp loop for the outer trailing ring
     const loop = () => {
-      // Lerp formula: x += (target - x) * speed
       ringX += (mouseX - ringX) * 0.18
       ringY += (mouseY - ringY) * 0.18
 
@@ -76,7 +72,7 @@ export function CustomCursor() {
       document.removeEventListener('mouseleave', handleMouseLeave)
       document.removeEventListener('mouseenter', handleMouseEnter)
     }
-  }, [isVisible])
+  }, [isFinePointer])
 
   if (!isFinePointer) return null
 

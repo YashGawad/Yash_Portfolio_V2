@@ -6,12 +6,14 @@ import { Container } from '../common/Container'
 import { SectionHeading } from '../common/SectionHeading'
 import { PORTFOLIO_DATA } from '../../data/portfolio'
 import { getAssetUrl } from '../../lib/asset'
+import { isReducedMotion, MOTION_TIMING, MOTION_EASING } from '../../lib/animations'
 
 export function About() {
   const { identity } = PORTFOLIO_DATA
   const profileImageUrl = getAssetUrl(identity.profileImage)
   const sectionRef = useRef<HTMLElement>(null)
   const counterRef = useRef<HTMLSpanElement>(null)
+  const imageWrapperRef = useRef<HTMLDivElement>(null)
   const [displayedScore, setDisplayedScore] = useState('00.00%')
 
   const coreFocusAreas = [
@@ -24,10 +26,29 @@ export function About() {
 
   useGSAP(
     () => {
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      if (prefersReduced) {
+      if (isReducedMotion()) {
         setDisplayedScore('83.09%')
         return
+      }
+
+      // Profile image reveal with smooth mask
+      if (imageWrapperRef.current) {
+        gsap.fromTo(
+          imageWrapperRef.current,
+          { clipPath: 'polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%)', opacity: 0 },
+          {
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+            opacity: 1,
+            duration: MOTION_TIMING.signature,
+            ease: MOTION_EASING.entrance,
+            scrollTrigger: {
+              trigger: imageWrapperRef.current,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+              once: true,
+            },
+          }
+        )
       }
 
       // Staggered section element reveals
@@ -37,27 +58,29 @@ export function About() {
         {
           opacity: 1,
           y: 0,
-          stagger: 0.12,
-          duration: 0.7,
-          ease: 'power3.out',
+          stagger: 0.1,
+          duration: MOTION_TIMING.entrance,
+          ease: MOTION_EASING.default,
           scrollTrigger: {
             trigger: sectionRef.current,
             start: 'top 80%',
             toggleActions: 'play none none none',
+            once: true,
           },
         }
       )
 
-      // Animate 83.09% counter
+      // Animate 83.09% score counter once with natural deceleration
       const scoreObj = { val: 0 }
       gsap.to(scoreObj, {
         val: 83.09,
-        duration: 1.6,
+        duration: 1.5,
         ease: 'power2.out',
         scrollTrigger: {
           trigger: counterRef.current,
           start: 'top 90%',
           toggleActions: 'play none none none',
+          once: true,
         },
         onUpdate: () => {
           setDisplayedScore(`${scoreObj.val.toFixed(2)}%`)
@@ -88,7 +111,10 @@ export function About() {
           {/* Left Column: Portrait & Key Credentials Bento */}
           <div className="lg:col-span-5 flex flex-col gap-6">
             <div className="about-reveal-item relative rounded-3xl p-3 bg-slate-900/70 border border-slate-800/90 backdrop-blur-xl shadow-xl overflow-hidden group">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
+              <div
+                ref={imageWrapperRef}
+                className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800"
+              >
                 <img
                   src={profileImageUrl}
                   alt="Yash Gawad in working environment"

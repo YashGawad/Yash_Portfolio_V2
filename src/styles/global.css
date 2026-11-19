@@ -36,7 +36,6 @@
   }
 
   html {
-    scroll-behavior: smooth;
     color-scheme: dark;
   }
 
@@ -108,17 +107,18 @@
 /* Infinite Marquee Ticker */
 @keyframes marquee-scroll {
   0% {
-    transform: translateX(0%);
+    transform: translate3d(0%, 0, 0);
   }
   100% {
-    transform: translateX(-33.333333%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
 .animate-marquee {
   display: flex;
   width: max-content;
-  animation: marquee-scroll 25s linear infinite;
+  animation: marquee-scroll 26s linear infinite;
+  will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {

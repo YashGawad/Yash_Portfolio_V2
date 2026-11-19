@@ -1,13 +1,14 @@
 import { ArrowUp, Sparkles, Mail, Phone } from 'lucide-react'
 import { Container } from '../common/Container'
-import { useLenis } from './SmoothScrollProvider'
+import { useLenis, useScrollProgress } from './scrollContext'
 import { Magnetic } from '../common/Magnetic'
 import { GithubIcon, LinkedinIcon } from '../common/Icons'
 import { PORTFOLIO_DATA } from '../../data/portfolio'
 
 export function Footer() {
   const { identity } = PORTFOLIO_DATA
-  const { scrollTo, scrollProgress } = useLenis()
+  const { scrollTo } = useLenis()
+  const scrollProgress = useScrollProgress()
 
   const scrollToTop = () => {
     scrollTo(0, { duration: 1.4 })

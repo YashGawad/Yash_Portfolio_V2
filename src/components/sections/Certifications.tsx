@@ -5,6 +5,7 @@ import { Award, GraduationCap, Calendar, CheckCircle2, BookmarkCheck } from 'luc
 import { Container } from '../common/Container'
 import { SectionHeading } from '../common/SectionHeading'
 import { PORTFOLIO_DATA } from '../../data/portfolio'
+import { isReducedMotion, MOTION_TIMING, MOTION_EASING } from '../../lib/animations'
 
 export function Certifications() {
   const { education, certifications } = PORTFOLIO_DATA
@@ -13,8 +14,7 @@ export function Certifications() {
 
   useGSAP(
     () => {
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      if (prefersReduced) return
+      if (isReducedMotion()) return
 
       // Scroll-driven dynamic timeline line drawing
       if (lineRef.current) {
@@ -29,7 +29,7 @@ export function Certifications() {
               trigger: '.timeline-container',
               start: 'top 75%',
               end: 'bottom 85%',
-              scrub: 0.6,
+              scrub: 0.5,
             },
           }
         )
@@ -39,17 +39,18 @@ export function Certifications() {
       const eduCards = gsap.utils.toArray<HTMLElement>('.edu-card')
       gsap.fromTo(
         eduCards,
-        { opacity: 0, x: -30 },
+        { opacity: 0, x: -25 },
         {
           opacity: 1,
           x: 0,
-          stagger: 0.15,
-          duration: 0.7,
-          ease: 'power3.out',
+          stagger: 0.12,
+          duration: MOTION_TIMING.entrance,
+          ease: MOTION_EASING.entrance,
           scrollTrigger: {
             trigger: '.timeline-container',
             start: 'top 80%',
             toggleActions: 'play none none none',
+            once: true,
           },
         }
       )
@@ -58,18 +59,19 @@ export function Certifications() {
       const certCards = gsap.utils.toArray<HTMLElement>('.cert-card')
       gsap.fromTo(
         certCards,
-        { opacity: 0, y: 30, scale: 0.95 },
+        { opacity: 0, y: 25, scale: 0.96 },
         {
           opacity: 1,
           y: 0,
           scale: 1,
-          stagger: 0.1,
-          duration: 0.65,
-          ease: 'power3.out',
+          stagger: 0.08,
+          duration: MOTION_TIMING.entrance,
+          ease: MOTION_EASING.default,
           scrollTrigger: {
             trigger: '.cert-grid',
             start: 'top 82%',
             toggleActions: 'play none none none',
+            once: true,
           },
         }
       )
@@ -146,49 +148,50 @@ export function Certifications() {
             </div>
           </div>
 
-          {/* Right Column: Certification Gallery */}
+          {/* Right Column: Industry Certifications Gallery */}
           <div className="lg:col-span-7 space-y-6">
             <div className="flex items-center gap-2 text-cyan-400 font-mono text-xs mb-2">
               <Award className="w-4 h-4" />
-              <span>VERIFIED CERTIFICATIONS</span>
+              <span>VERIFIED CREDENTIALS</span>
             </div>
 
-            <div className="cert-grid grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="cert-grid grid grid-cols-1 gap-4">
               {certifications.map((cert, index) => (
                 <div
                   key={index}
-                  className="cert-card p-6 rounded-2xl bg-slate-900/50 border border-slate-800/80 hover:border-cyan-500/40 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between hover:shadow-xl hover:shadow-cyan-950/20"
+                  className="cert-card p-6 sm:p-7 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-300 backdrop-blur-xl hover:shadow-xl hover:shadow-cyan-950/20"
                 >
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-cyan-400">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-cyan-400">
                         <BookmarkCheck className="w-5 h-5" />
                       </div>
-                      <span className="text-[11px] font-mono text-slate-500">
-                        // CERT 0{index + 1}
-                      </span>
-                    </div>
-
-                    <h3 className="text-base font-bold text-white mb-1">
-                      {cert.title}
-                    </h3>
-                    <div className="text-xs font-mono text-cyan-300/80 mb-4">
-                      {cert.issuer}
-                    </div>
-
-                    <div className="space-y-1.5 pt-3 border-t border-slate-800/60 mb-4">
-                      {cert.skillsCovered.map((skill, sIdx) => (
-                        <div key={sIdx} className="flex items-center gap-2 text-xs text-slate-300">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                          <span>{skill}</span>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-bold text-white leading-snug">
+                          {cert.title}
+                        </h3>
+                        <div className="text-xs text-cyan-300/90 font-mono mt-0.5">
+                          {cert.issuer}
                         </div>
-                      ))}
+                      </div>
                     </div>
+
+                    <span className="text-xs font-mono text-cyan-400/90 bg-cyan-950/40 px-2.5 py-1 rounded-md border border-cyan-500/20 shrink-0">
+                      Verified
+                    </span>
                   </div>
 
-                  <div className="text-[11px] font-mono text-slate-500 pt-3 border-t border-slate-800/40 flex items-center justify-between">
-                    <span>Credential Program</span>
-                    <span className="text-emerald-400 font-medium">Completed</span>
+                  <div className="flex flex-wrap items-center gap-2 pl-12 pt-3 border-t border-slate-800/60">
+                    <span className="text-[11px] font-mono text-slate-400">Key Competencies:</span>
+                    {cert.skillsCovered.map((skill, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300"
+                      >
+                        <CheckCircle2 className="w-3 h-3 text-cyan-400" />
+                        <span>{skill}</span>
+                      </span>
+                    ))}
                   </div>
                 </div>
               ))}

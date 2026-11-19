@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Menu, X, FileText, ArrowUpRight } from 'lucide-react'
 import { Container } from '../common/Container'
@@ -6,7 +6,7 @@ import { ThemeToggle } from '../common/ThemeToggle'
 import { Magnetic } from '../common/Magnetic'
 import { getAssetUrl } from '../../lib/asset'
 import { PORTFOLIO_DATA } from '../../data/portfolio'
-import { useLenis } from './SmoothScrollProvider'
+import { useLenis } from './scrollContext'
 
 const NAV_ITEMS = [
   { label: 'Home', href: '#home' },
@@ -22,7 +22,21 @@ export function Navbar() {
   const [activeSection, setActiveSection] = useState<string>('home')
   const [isScrolled, setIsScrolled] = useState<boolean>(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false)
+  const [headerHeight, setHeaderHeight] = useState<number>(72)
+  const headerRef = useRef<HTMLElement>(null)
   const { scrollTo } = useLenis()
+
+  // Track real header height dynamically
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.offsetHeight)
+      }
+    }
+    updateHeaderHeight()
+    window.addEventListener('resize', updateHeaderHeight, { passive: true })
+    return () => window.removeEventListener('resize', updateHeaderHeight)
+  }, [isScrolled])
 
   // Scroll spy for active section and header background transition
   useEffect(() => {
@@ -71,6 +85,7 @@ export function Navbar() {
 
   return (
     <header
+      ref={headerRef}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
           ? 'py-3 bg-[#07090e]/85 backdrop-blur-xl border-b border-slate-800/70 shadow-lg shadow-black/25'
@@ -175,11 +190,12 @@ export function Navbar() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="lg:hidden fixed inset-x-0 top-[65px] bg-[#07090e]/98 backdrop-blur-2xl border-b border-slate-800 px-6 py-8 shadow-2xl flex flex-col gap-4 max-h-[calc(100vh-65px)] overflow-y-auto"
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            style={{ top: `${headerHeight}px`, maxHeight: `calc(100vh - ${headerHeight}px)` }}
+            className="lg:hidden fixed inset-x-0 bg-[#07090e]/98 backdrop-blur-2xl border-b border-slate-800 px-6 py-8 shadow-2xl flex flex-col gap-4 overflow-y-auto"
           >
             <div className="flex flex-col gap-1">
               {NAV_ITEMS.map((item) => {

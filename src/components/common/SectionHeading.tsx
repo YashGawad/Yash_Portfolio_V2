@@ -23,7 +23,7 @@ export function SectionHeading({
 
   return (
     <div
-      className={`mb-12 md:mb-16 ${
+      className={`section-heading-container mb-12 md:mb-16 ${
         isCenter ? 'text-center mx-auto max-w-3xl' : 'max-w-3xl'
       } ${className}`}
     >

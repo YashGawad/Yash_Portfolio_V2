@@ -52,17 +52,35 @@ export function Contact() {
       if (bentoRef.current) {
         gsap.fromTo(
           bentoRef.current,
-          { opacity: 0, y: 40, scale: 0.97 },
+          { opacity: 0, y: 30 },
           {
             opacity: 1,
             y: 0,
-            scale: 1,
-            duration: 0.8,
+            duration: 0.75,
             ease: 'power3.out',
             scrollTrigger: {
               trigger: bentoRef.current,
               start: 'top 85%',
               toggleActions: 'play none none none',
+              once: true,
+            },
+          }
+        )
+
+        gsap.fromTo(
+          '.contact-channel-card',
+          { opacity: 0, y: 20 },
+          {
+            opacity: 1,
+            y: 0,
+            stagger: 0.08,
+            duration: 0.6,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: bentoRef.current,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+              once: true,
             },
           }
         )
@@ -191,7 +209,7 @@ export function Contact() {
           {/* 4 Interactive Contact Channels Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* 1. Email Card */}
-            <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/70 border border-slate-800/90 hover:border-cyan-500/40 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between shadow-xl">
+            <div className="contact-channel-card p-6 sm:p-7 rounded-3xl bg-slate-900/70 border border-slate-800/90 hover:border-cyan-500/40 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between shadow-xl">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-cyan-400">
@@ -260,7 +278,7 @@ export function Contact() {
             </div>
 
             {/* 2. Phone Card */}
-            <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/70 border border-slate-800/90 hover:border-cyan-500/40 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between shadow-xl">
+            <div className="contact-channel-card p-6 sm:p-7 rounded-3xl bg-slate-900/70 border border-slate-800/90 hover:border-cyan-500/40 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between shadow-xl">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-sky-400">
@@ -317,7 +335,7 @@ export function Contact() {
             </div>
 
             {/* 3. LinkedIn Card */}
-            <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/70 border border-slate-800/90 hover:border-cyan-500/40 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between shadow-xl">
+            <div className="contact-channel-card p-6 sm:p-7 rounded-3xl bg-slate-900/70 border border-slate-800/90 hover:border-cyan-500/40 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between shadow-xl">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-blue-400">
@@ -351,7 +369,7 @@ export function Contact() {
             </div>
 
             {/* 4. GitHub Card */}
-            <div className="p-6 sm:p-7 rounded-3xl bg-slate-900/70 border border-slate-800/90 hover:border-cyan-500/40 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between shadow-xl">
+            <div className="contact-channel-card p-6 sm:p-7 rounded-3xl bg-slate-900/70 border border-slate-800/90 hover:border-cyan-500/40 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between shadow-xl">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200">
@@ -494,7 +512,7 @@ export function Contact() {
                     onChange={handleInputChange}
                     placeholder="Enter your name"
                     disabled={formStatus === 'submitting'}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors disabled:opacity-50"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/25 transition-all shadow-inner disabled:opacity-50"
                   />
                 </div>
 
@@ -513,7 +531,7 @@ export function Contact() {
                     onChange={handleInputChange}
                     placeholder="name@company.com"
                     disabled={formStatus === 'submitting'}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors disabled:opacity-50"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/25 transition-all shadow-inner disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -533,7 +551,7 @@ export function Contact() {
                   onChange={handleInputChange}
                   placeholder="e.g. Full-Stack Engineering Role / Project Inquiry"
                   disabled={formStatus === 'submitting'}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/25 transition-all shadow-inner disabled:opacity-50"
                 />
               </div>
 
@@ -552,7 +570,7 @@ export function Contact() {
                   onChange={handleInputChange}
                   placeholder="Describe your project, role, or inquiry..."
                   disabled={formStatus === 'submitting'}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors resize-y disabled:opacity-50"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/25 transition-all shadow-inner resize-y disabled:opacity-50"
                 />
               </div>
 

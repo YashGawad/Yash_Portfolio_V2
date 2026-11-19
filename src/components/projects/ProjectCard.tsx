@@ -1,10 +1,12 @@
-import { useRef, useState, type MouseEvent } from 'react'
+import { useRef, useEffect, type MouseEvent } from 'react'
 import { ExternalLink, Layers, ArrowUpRight } from 'lucide-react'
 import type { Project } from '../../data/portfolio'
 import { Button } from '../common/Button'
 import { Magnetic } from '../common/Magnetic'
 import { GithubIcon } from '../common/Icons'
 import { getAssetUrl } from '../../lib/asset'
+import { isReducedMotion, isFinePointer, MOTION_EASING } from '../../lib/animations'
+import gsap from 'gsap'
 
 interface ProjectCardProps {
   project: Project
@@ -19,40 +21,79 @@ export function ProjectCard({
   priority = false,
 }: ProjectCardProps) {
   const cardRef = useRef<HTMLDivElement>(null)
-  const [rotateX, setRotateX] = useState(0)
-  const [rotateY, setRotateY] = useState(0)
-  const [spotlightPos, setSpotlightPos] = useState({ x: 50, y: 50 })
-  const [isHovered, setIsHovered] = useState(false)
+  const spotlightRef = useRef<HTMLDivElement>(null)
+  const imageContainerRef = useRef<HTMLDivElement>(null)
+  const imageRef = useRef<HTMLImageElement>(null)
 
+  const quickToTiltX = useRef<((val: number) => void) | null>(null)
+  const quickToTiltY = useRef<((val: number) => void) | null>(null)
+
+  // Initialize GSAP quickTo handlers once on mount for ultra-efficient 60fps tilt
+  useEffect(() => {
+    if (!isFinePointer() || isReducedMotion() || !cardRef.current) return
+
+    quickToTiltX.current = gsap.quickTo(cardRef.current, 'rotationX', {
+      duration: 0.35,
+      ease: MOTION_EASING.smooth,
+    })
+    quickToTiltY.current = gsap.quickTo(cardRef.current, 'rotationY', {
+      duration: 0.35,
+      ease: MOTION_EASING.smooth,
+    })
+
+    gsap.set(cardRef.current, {
+      transformPerspective: 1200,
+      transformStyle: 'preserve-3d',
+    })
+
+    return () => {
+      quickToTiltX.current = null
+      quickToTiltY.current = null
+    }
+  }, [])
+
+  // High-performance pointer tracking without triggering any React re-renders
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (window.matchMedia('(pointer: coarse)').matches) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    if (!cardRef.current) return
+    if (!isFinePointer() || isReducedMotion() || !cardRef.current) return
 
     const rect = cardRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
 
-    // Calculate spotlight position percentages
-    const xPct = Math.round((x / rect.width) * 100)
-    const yPct = Math.round((y / rect.height) * 100)
-    setSpotlightPos({ x: xPct, y: yPct })
+    // Update spotlight via direct DOM manipulation
+    if (spotlightRef.current) {
+      const xPct = (x / rect.width) * 100
+      const yPct = (y / rect.height) * 100
+      spotlightRef.current.style.background = `radial-gradient(650px circle at ${xPct.toFixed(1)}% ${yPct.toFixed(1)}%, rgba(56, 189, 248, 0.12), transparent 45%)`
+    }
 
-    // Calculate subtle 3D tilt angles (bounded between -4 and +4 degrees)
+    // Calculate subtle 3D tilt angles (bounded between -3.5 and +3.5 degrees)
     const centerX = rect.width / 2
     const centerY = rect.height / 2
     const tiltX = -((y - centerY) / centerY) * 3.5
     const tiltY = ((x - centerX) / centerX) * 3.5
 
-    setRotateX(tiltX)
-    setRotateY(tiltY)
+    quickToTiltX.current?.(tiltX)
+    quickToTiltY.current?.(tiltY)
   }
 
-  const handleMouseEnter = () => setIsHovered(true)
+  const handleMouseEnter = () => {
+    if (!isFinePointer() || isReducedMotion()) return
+    if (spotlightRef.current) {
+      spotlightRef.current.style.opacity = '1'
+    }
+  }
+
   const handleMouseLeave = () => {
-    setIsHovered(false)
-    setRotateX(0)
-    setRotateY(0)
+    if (!isFinePointer() || isReducedMotion() || !cardRef.current) return
+
+    if (spotlightRef.current) {
+      spotlightRef.current.style.opacity = '0'
+    }
+
+    // Smooth return to baseline resting position
+    quickToTiltX.current?.(0)
+    quickToTiltY.current?.(0)
   }
 
   const imageUrl = getAssetUrl(project.image)
@@ -63,24 +104,17 @@ export function ProjectCard({
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      style={{
-        transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
-        transition: isHovered
-          ? 'transform 0.1s ease-out'
-          : 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-      }}
-      className={`group relative rounded-3xl bg-slate-900/70 border border-slate-800/90 hover:border-cyan-500/40 p-6 sm:p-8 lg:p-10 backdrop-blur-2xl transition-all duration-300 overflow-hidden shadow-2xl project-card-item`}
+      className="project-card-item group relative rounded-3xl bg-slate-900/70 border border-slate-800/90 hover:border-cyan-500/40 p-6 sm:p-8 lg:p-10 backdrop-blur-2xl transition-all duration-300 overflow-hidden shadow-2xl will-change-transform"
     >
-      {/* Dynamic Cursor Spotlight Effect */}
+      {/* Dynamic Cursor Spotlight Effect (Updated via DOM styles, zero React re-render) */}
       <div
-        className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-3xl"
-        style={{
-          background: `radial-gradient(650px circle at ${spotlightPos.x}% ${spotlightPos.y}%, rgba(56, 189, 248, 0.12), transparent 45%)`,
-        }}
+        ref={spotlightRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 rounded-3xl"
       />
 
       {/* Subtle Animated Gradient Border Sweep */}
-      <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-tr from-cyan-500/10 via-transparent to-blue-500/10" />
+      <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-tr from-cyan-500/8 via-transparent to-blue-500/8" />
 
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
         {/* Left Info Column */}
@@ -99,7 +133,7 @@ export function ProjectCard({
               {project.isInProgress && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 ml-auto">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-                  Real Client Project — In Progress
+                  Real Client Project
                 </span>
               )}
             </div>
@@ -142,7 +176,7 @@ export function ProjectCard({
 
           {/* Action Button Row */}
           <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-800/80">
-            <Magnetic strength={0.2}>
+            <Magnetic strength={0.15}>
               <div>
                 <Button
                   variant="primary"
@@ -158,7 +192,7 @@ export function ProjectCard({
             </Magnetic>
 
             {project.githubUrl && (
-              <Magnetic strength={0.2}>
+              <Magnetic strength={0.15}>
                 <div>
                   <Button
                     variant="secondary"
@@ -174,7 +208,7 @@ export function ProjectCard({
               </Magnetic>
             )}
 
-            <Magnetic strength={0.2}>
+            <Magnetic strength={0.15}>
               <div className="ml-auto">
                 <Button
                   variant="outline"
@@ -192,10 +226,12 @@ export function ProjectCard({
         {/* Right Preview Media Column */}
         <div className="lg:col-span-6 order-1 lg:order-2">
           <div
+            ref={imageContainerRef}
             onClick={() => onOpenDetails(project)}
             className="relative rounded-2xl overflow-hidden bg-slate-950 border border-slate-800/90 group-hover:border-cyan-500/50 shadow-2xl cursor-pointer aspect-[16/10] transition-all duration-300"
           >
             <img
+              ref={imageRef}
               src={imageUrl}
               alt={`${project.title} Application Preview`}
               loading={priority ? 'eager' : 'lazy'}

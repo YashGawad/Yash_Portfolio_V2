@@ -1,49 +1,44 @@
 import {
-  createContext,
-  useContext,
   useEffect,
   useRef,
   useState,
+  useCallback,
+  useMemo,
   type ReactNode,
 } from 'react'
 import Lenis from 'lenis'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import {
+  LenisActionsContext,
+  ScrollProgressContext,
+} from './scrollContext'
 
 gsap.registerPlugin(ScrollTrigger)
-
-interface LenisContextValue {
-  lenis: Lenis | null
-  scrollProgress: number
-  scrollTo: (target: string | number | HTMLElement, options?: { offset?: number; duration?: number }) => void
-}
-
-const LenisContext = createContext<LenisContextValue>({
-  lenis: null,
-  scrollProgress: 0,
-  scrollTo: () => {},
-})
-
-export function useLenis() {
-  return useContext(LenisContext)
-}
 
 interface SmoothScrollProviderProps {
   children: ReactNode
 }
 
 export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
-  const lenisRef = useRef<Lenis | null>(null)
   const [scrollProgress, setScrollProgress] = useState(0)
+  const lenisRef = useRef<Lenis | null>(null)
 
   useEffect(() => {
     // Respect reduced motion preference
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (prefersReducedMotion) {
+      let ticking = false
       const handleNativeScroll = () => {
-        const total = document.documentElement.scrollHeight - window.innerHeight
-        if (total > 0) {
-          setScrollProgress(Math.min(1, Math.max(0, window.scrollY / total)))
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            const total = document.documentElement.scrollHeight - window.innerHeight
+            if (total > 0) {
+              setScrollProgress(Math.min(1, Math.max(0, window.scrollY / total)))
+            }
+            ticking = false
+          })
+          ticking = true
         }
       }
       window.addEventListener('scroll', handleNativeScroll, { passive: true })
@@ -55,15 +50,20 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       wheelMultiplier: 1.0,
-      touchMultiplier: 1.5,
+      touchMultiplier: 1.4,
     })
 
     lenisRef.current = lenis
 
-    // Synchronize Lenis scroll with ScrollTrigger
+    // Synchronize Lenis scroll with ScrollTrigger and throttle progress state updates
+    let lastProgress = 0
     lenis.on('scroll', (e) => {
       ScrollTrigger.update()
-      setScrollProgress(e.progress)
+      const currentProgress = e.progress
+      if (Math.abs(currentProgress - lastProgress) > 0.004 || currentProgress === 0 || currentProgress === 1) {
+        lastProgress = currentProgress
+        setScrollProgress(currentProgress)
+      }
     })
 
     // Unified animation frame using GSAP ticker
@@ -74,10 +74,9 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
     gsap.ticker.add(tickerCallback)
     gsap.ticker.lagSmoothing(0)
 
-    // Force ScrollTrigger to refresh its coordinates after layout stabilizes
     const timeout = setTimeout(() => {
       ScrollTrigger.refresh()
-    }, 400)
+    }, 300)
 
     return () => {
       clearTimeout(timeout)
@@ -87,30 +86,43 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
     }
   }, [])
 
-  const scrollTo = (
-    target: string | number | HTMLElement,
-    options?: { offset?: number; duration?: number }
-  ) => {
-    if (lenisRef.current) {
-      lenisRef.current.scrollTo(target, {
-        offset: options?.offset ?? 0,
-        duration: options?.duration ?? 1.2,
-      })
-    } else {
-      if (typeof target === 'string') {
-        const el = document.querySelector(target)
-        el?.scrollIntoView({ behavior: 'smooth' })
-      } else if (typeof target === 'number') {
-        window.scrollTo({ top: target, behavior: 'smooth' })
-      } else if (target instanceof HTMLElement) {
-        target.scrollIntoView({ behavior: 'smooth' })
+  const scrollTo = useCallback(
+    (
+      target: string | number | HTMLElement,
+      options?: { offset?: number; duration?: number; immediate?: boolean }
+    ) => {
+      if (lenisRef.current) {
+        lenisRef.current.scrollTo(target, {
+          offset: options?.offset ?? 0,
+          duration: options?.duration ?? 1.2,
+          immediate: options?.immediate ?? false,
+        })
+      } else {
+        if (typeof target === 'string') {
+          const el = document.querySelector(target)
+          el?.scrollIntoView({ behavior: 'smooth' })
+        } else if (typeof target === 'number') {
+          window.scrollTo({ top: target, behavior: 'smooth' })
+        } else if (target instanceof HTMLElement) {
+          target.scrollIntoView({ behavior: 'smooth' })
+        }
       }
-    }
-  }
+    },
+    []
+  )
+
+  const actionsValue = useMemo(
+    () => ({
+      scrollTo,
+    }),
+    [scrollTo]
+  )
 
   return (
-    <LenisContext.Provider value={{ lenis: lenisRef.current, scrollProgress, scrollTo }}>
-      {children}
-    </LenisContext.Provider>
+    <LenisActionsContext.Provider value={actionsValue}>
+      <ScrollProgressContext.Provider value={scrollProgress}>
+        {children}
+      </ScrollProgressContext.Provider>
+    </LenisActionsContext.Provider>
   )
 }
